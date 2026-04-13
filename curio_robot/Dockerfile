@@ -24,6 +24,7 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Start script
 COPY run.sh /run.sh
+RUN sed -i 's/\r$//' /run.sh
 RUN chmod a+x /run.sh
 
 CMD [ "/run.sh" ]
