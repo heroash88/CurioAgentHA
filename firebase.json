@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "dist",
+    "public": "curio_robot/dist",
     "ignore": [
       "firebase.json",
       "**/.*",

@@ -20,10 +20,10 @@ FROM nginx:stable-alpine
 COPY --from=build-stage /app/dist /usr/share/nginx/html
 
 # Copy nginx configuration
-COPY ha-addon/nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Start script
-COPY ha-addon/run.sh /run.sh
+COPY run.sh /run.sh
 RUN chmod a+x /run.sh
 
 CMD [ "/run.sh" ]
