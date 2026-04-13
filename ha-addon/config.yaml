@@ -1,0 +1,17 @@
+name: "Curio Robot"
+version: "0.1.1"
+slug: "curio_robot"
+description: "A friendly, voice-powered AI assistant that lives on your screen."
+url: "https://github.com/heroa/curio-robot"
+arch:
+  - aarch64
+  - amd64
+  - armv7
+ingress: true
+ingress_port: 8080
+panel_icon: "mdi:robot"
+panel_title: "Curio"
+stage: "experimental"
+startup: "services"
+options: {}
+schema: {}

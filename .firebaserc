@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "curio-agent"
+  },
+  "targets": {},
+  "etags": {}
+}

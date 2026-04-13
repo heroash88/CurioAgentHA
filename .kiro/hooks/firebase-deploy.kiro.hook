@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "name": "Deploy to Firebase",
+  "description": "Builds the project and deploys to Firebase Hosting (curio-agent)",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "npm run build && npx -y firebase-tools@latest deploy --only hosting --project curio-agent",
+    "timeout": 180
+  }
+}
