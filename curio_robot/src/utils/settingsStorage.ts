@@ -124,21 +124,30 @@ export const setWorkLocation = (val: string) => {
 
 export const useWorkLocation = () => useSettingsStorageValue(getWorkLocation, '');
 
+import {
+    isHomeAssistantIngress,
+    getHomeAssistantAutoUrl,
+    HA_AUTO_LOGIN_TOKEN
+} from './haAuthUtils';
+
 export const DEFAULT_HA_URL = 'http://homeassistant.local:8123';
 export const DEFAULT_HA_TOKEN = '';
 
 export const getHaMcpUrl = () => {
     if (typeof window === 'undefined') return DEFAULT_HA_URL;
+    if (isHomeAssistantIngress()) return getHomeAssistantAutoUrl();
     return localStorage.getItem('curio_ha_mcp_url') || DEFAULT_HA_URL;
 };
 
 export const getHaMcpToken = () => {
     if (typeof window === 'undefined') return DEFAULT_HA_TOKEN;
+    if (isHomeAssistantIngress()) return HA_AUTO_LOGIN_TOKEN;
     return localStorage.getItem('curio_ha_mcp_token') || DEFAULT_HA_TOKEN;
 };
 
 /** Async version that decrypts the HA token from encrypted storage. */
 export const getHaMcpTokenAsync = async (): Promise<string> => {
+    if (isHomeAssistantIngress()) return HA_AUTO_LOGIN_TOKEN;
     const val = await getSecret('curio_ha_mcp_token');
     if (val) return val;
     // Fallback: try raw localStorage in case encryption failed
@@ -149,6 +158,7 @@ export const getHaMcpTokenAsync = async (): Promise<string> => {
 
 export const getHaMcpEnabled = () => {
     if (typeof window === 'undefined') return false;
+    if (isHomeAssistantIngress()) return true; // Auto-enable when running as add-on
     return localStorage.getItem('curio_ha_mcp_enabled') === 'true';
 };
 

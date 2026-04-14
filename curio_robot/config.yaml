@@ -13,5 +13,6 @@ panel_icon: "mdi:robot"
 panel_title: "Curio"
 stage: "experimental"
 startup: "services"
+hassio_api: true
 options: {}
 schema: {}

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense, startTransition } from 'react';
-import { Eye, EyeOff, ExternalLink, Sparkles, User, Mic, Brain, AudioWaveform, Thermometer, RotateCcw, Palette, Link, Server, KeyRound, Image, Clock, CloudRain, MessageCircle, Power, Maximize, MapPin, Timer, Trash2, Upload, Play, ArrowUpDown } from 'lucide-react';
+import { Eye, EyeOff, ExternalLink, Sparkles, User, Mic, Brain, AudioWaveform, Thermometer, RotateCcw, Palette, Link, Server, KeyRound, Image, Clock, CloudRain, MessageCircle, Power, Maximize, MapPin, Timer, Trash2, Upload, Play, ArrowUpDown, Shield } from 'lucide-react';
 
 import { GEMINI_LIVE_VOICES } from '../../services/geminiVoiceCatalog';
 import { getAvailableWakeWords, getWakeWordDefinition } from '../../services/wakeWordCatalog';
@@ -12,6 +12,7 @@ import { useLiveApiVoiceId, useSelectedWakeWordId, useSettingsStore, DEFAULT_HA_
 import type { PersonalityId, ScreensaverSource } from '../../utils/settingsStorage';
 import { useLiveAPI } from '../../contexts/LiveAPIContext';
 import { isIOSStandalonePwa } from '../../utils/pwa';
+import { isHomeAssistantIngress } from '../../utils/haAuthUtils';
 import {
     preloadWakeWordModel,
     prepareWakeWordAudio,
@@ -1648,9 +1649,15 @@ const CurioSettingsModalComponent: React.FC<CurioSettingsModalProps> = ({
                                         </span>
                                     </div>
                                 )}
+                                {isHomeAssistantIngress() && (
+                                    <div className="flex items-center gap-1.5 rounded-full border border-sky-100 bg-sky-50 px-2 py-0.5 shadow-sm">
+                                        <span className="text-[9px] font-black uppercase tracking-tight text-sky-600">Add-on Mode</span>
+                                    </div>
+                                )}
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
+                                    disabled={isHomeAssistantIngress()}
                                     onClick={() => {
                                         setHaMcpEnabled(!haMcpEnabled);
                                         if (haMcpEnabled) {
@@ -1659,7 +1666,7 @@ const CurioSettingsModalComponent: React.FC<CurioSettingsModalProps> = ({
                                             setMcpError(null);
                                         }
                                     }}
-                                    className={`relative h-6 w-11 shrink-0 rounded-full shadow-sm transition-all duration-300 active:scale-95 ${haMcpEnabled ? 'bg-indigo-500' : 'bg-slate-300'}`}
+                                    className={`relative h-6 w-11 shrink-0 rounded-full shadow-sm transition-all duration-300 active:scale-95 ${haMcpEnabled ? 'bg-indigo-500' : 'bg-slate-300'} ${isHomeAssistantIngress() ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                     <div className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-md transition-all duration-300 ${haMcpEnabled ? 'left-5.5' : 'left-0.5'}`} />
                                 </button>
@@ -1670,20 +1677,33 @@ const CurioSettingsModalComponent: React.FC<CurioSettingsModalProps> = ({
                                 className="space-y-3 overflow-hidden"
                                 style={{ contentVisibility: 'auto', containIntrinsicSize: '260px' }}
                             >
-                                <div className="flex gap-2 rounded-lg bg-slate-100 p-1">
-                                    <button
-                                        onClick={() => { setHaMcpAuthMode('oauth'); }}
-                                        className={`flex-1 rounded-md px-2 py-1.5 text-[10px] font-bold transition-all ${haMcpAuthMode === 'oauth' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                                    >
-                                        OAuth Login
-                                    </button>
-                                    <button
-                                        onClick={() => { setHaMcpAuthMode('token'); }}
-                                        className={`flex-1 rounded-md px-2 py-1.5 text-[10px] font-bold transition-all ${haMcpAuthMode === 'token' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                                    >
-                                        Access Token
-                                    </button>
-                                </div>
+                                {isHomeAssistantIngress() && (
+                                    <div className="mt-1 flex items-center gap-2.5 rounded-xl border border-sky-100 bg-sky-50/50 p-3 italic">
+                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-600">
+                                            <Shield size={18} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-[11px] font-bold text-sky-800">Auto-Configured</p>
+                                            <p className="text-[10px] text-sky-600">Running inside Home Assistant. Connection is established automatically via Supervisor Ingress.</p>
+                                        </div>
+                                    </div>
+                                )}
+                                {!isHomeAssistantIngress() && (
+                                    <div className="flex gap-2 rounded-lg bg-slate-100 p-1">
+                                        <button
+                                            onClick={() => { setHaMcpAuthMode('oauth'); }}
+                                            className={`flex-1 rounded-md px-2 py-1.5 text-[10px] font-bold transition-all ${haMcpAuthMode === 'oauth' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            OAuth Login
+                                        </button>
+                                        <button
+                                            onClick={() => { setHaMcpAuthMode('token'); }}
+                                            className={`flex-1 rounded-md px-2 py-1.5 text-[10px] font-bold transition-all ${haMcpAuthMode === 'token' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            Access Token
+                                        </button>
+                                    </div>
+                                )}
 
                                 {mcpStatus === 'error' && mcpError && (
                                     <div className="mx-1 flex items-start gap-2 rounded-lg border border-red-100 bg-red-50 p-2">
@@ -1711,12 +1731,13 @@ const CurioSettingsModalComponent: React.FC<CurioSettingsModalProps> = ({
                                     </button>
                                 )}
 
-                                <div className="space-y-1.5">
+                                <div className={`space-y-1.5 ${isHomeAssistantIngress() ? 'opacity-50 pointer-events-none' : ''}`}>
                                     <label className="ml-1 flex items-center gap-1.5 text-[10px] font-bold uppercase text-slate-400"><Server size={12} className="text-slate-400" /> Server URL</label>
                                     <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm transition-all focus-within:border-indigo-400">
                                         <span className="text-xs">URL</span>
                                         <input
                                             type="text"
+                                            readOnly={isHomeAssistantIngress()}
                                             placeholder={DEFAULT_HA_URL}
                                             className="w-full bg-transparent text-xs text-slate-700 outline-none"
                                             value={localHaUrl}
@@ -1735,12 +1756,13 @@ const CurioSettingsModalComponent: React.FC<CurioSettingsModalProps> = ({
                                         <ExternalLink size={12} />
                                     </button>
                                 ) : (
-                                    <div className="space-y-1.5">
+                                    <div className={`space-y-1.5 ${isHomeAssistantIngress() ? 'opacity-50 pointer-events-none' : ''}`}>
                                         <label className="ml-1 flex items-center gap-1.5 text-[10px] font-bold uppercase text-slate-400"><KeyRound size={12} className="text-slate-400" /> Access Token</label>
                                         <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm transition-all focus-within:border-indigo-400">
                                             <span className="text-xs">Token</span>
                                             <input
                                                 type={showHaToken ? 'text' : 'password'}
+                                                readOnly={isHomeAssistantIngress()}
                                                 placeholder={DEFAULT_HA_TOKEN ? "Using built-in token..." : "Long-lived access token..."}
                                                 className="w-full bg-transparent text-xs text-slate-700 outline-none"
                                                 value={localHaToken}
