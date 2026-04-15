@@ -1,4 +1,4 @@
-name: "Home Assistant App"
+name: "Curio Robot"
 description: "Curio -- a voice-powered AI assistant with 30+ response cards, wake word detection, smart home control, and more."
 version: "1.1.0"
 slug: "curio_ha_addon"
@@ -14,7 +14,7 @@ ingress_port: 8099
 homeassistant_api: true
 auth_api: true
 panel_icon: "mdi:robot-happy"
-panel_title: "Curio"
+panel_title: "Curio Robot"
 map:
   - config:rw
 options:
