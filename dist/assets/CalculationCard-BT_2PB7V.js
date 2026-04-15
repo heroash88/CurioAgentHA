@@ -1,0 +1,1 @@
+import{T as o,U as l,j as t}from"./index-CogKddjm.js";const n=({card:e})=>{const a=l(),s=e.data;return t.jsxs("div",{className:"card-glass",children:[t.jsx("p",{className:`text-base font-mono ${a.muted}`,children:s.equation}),t.jsxs("p",{className:`text-4xl font-bold font-headline mt-2 ${a.text}`,children:["= ",s.result]})]})},c=o.memo(n);export{c as default};
