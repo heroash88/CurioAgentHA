@@ -6,4 +6,4 @@ labels:
   org.opencontainers.image.title: "Curio Robot"
   org.opencontainers.image.description: "Curio - Voice-powered AI assistant with 30+ response cards"
   io.hass.type: addon
-  io.hass.version: "1.1.0"
+  io.hass.version: "1.1.1"
