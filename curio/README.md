@@ -23,6 +23,16 @@ Curio is also accessible directly at `http://<your-ha-ip>:8099`. This is useful 
 
 The port can be changed in the add-on configuration. After signing into Google via direct access, the tokens persist -- so ingress will have access to Google services too.
 
+## Microphone and Camera
+
+Mic and camera require a "secure context" (HTTPS or localhost). This means:
+
+- **HA with HTTPS** (Nabu Casa, reverse proxy, etc.) -- mic/camera work via direct access at `https://<your-domain>:8099`
+- **Plain HTTP** -- browsers block mic/camera. To work around this, open `chrome://flags/#unsafely-treat-insecure-origin-as-secure` in Chrome, add `http://<your-ha-ip>:8099`, and restart Chrome
+- **HA ingress** -- mic/camera don't work in the ingress iframe (HA limitation). Use direct access instead
+
+For the best experience on a kiosk/tablet, access Curio directly at `http(s)://<your-ha-ip>:8099` rather than through the HA sidebar.
+
 ## Requirements
 
 - A Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey) (entered in Curio's settings after first launch)
