@@ -13,9 +13,26 @@ A voice-powered AI assistant that runs as a Home Assistant add-on. Uses Google's
 
 The add-on uses ingress -- it appears directly inside the Home Assistant UI. When running as an add-on, Curio automatically connects to your Home Assistant instance (no manual token or login needed).
 
+## Direct Access (for Google Sign-In)
+
+Curio is also accessible directly at `http://<your-ha-ip>:8099`. This is useful for:
+
+- **Google sign-in** (Calendar, Tasks, Photos) -- popups don't work through HA ingress
+- Accessing Curio from other devices on your network
+- Kiosk/tablet setups
+
+The port can be changed in the add-on configuration. After signing into Google via direct access, the tokens persist -- so ingress will have access to Google services too.
+
 ## Requirements
 
 - A Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey) (entered in Curio's settings after first launch)
+
+## Configuration
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `port` | `8099` | Port for direct web access (change if 8099 conflicts) |
+| `log_level` | `info` | Logging verbosity |
 
 ## Updating
 

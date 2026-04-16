@@ -4,7 +4,12 @@
 # Serves the pre-built Curio web app via nginx with HA auto-login support
 # ==============================================================================
 
-bashio::log.info "Starting Curio web server on port 8099..."
+# Read user-configured port (default 8099)
+PORT=$(bashio::config 'port' 2>/dev/null || echo "8099")
+bashio::log.info "Starting Curio web server on port ${PORT}..."
+
+# Update nginx listen port if user changed it
+sed -i "s|listen 8099;|listen ${PORT};|g" /etc/nginx/http.d/default.conf
 
 # SUPERVISOR_TOKEN is provided by the HA Supervisor to addons with
 # homeassistant_api: true.
