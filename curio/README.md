@@ -23,6 +23,66 @@ Curio is also accessible directly at `http://<your-ha-ip>:8099`. This is useful 
 
 The port can be changed in the add-on configuration. After signing into Google via direct access, the tokens persist -- so ingress will have access to Google services too.
 
+## Google Sign-In Setup
+
+Connecting Google Calendar, Tasks, Gmail, and Photos requires a one-time setup in Google Cloud Console. Google rejects sign-in attempts from redirect URIs it doesn't know about, so you have to add your HA address to the allowlist.
+
+If you click **Connect** and get an error like:
+
+> Access blocked: Authorization Error  
+> redirect_uri not supported for response_type=token:  
+> http://192.168.0.2:8099/oauth-callback.html
+
+that means Google doesn't recognize that URL yet. Follow these steps:
+
+### 1. Create a Google OAuth Client ID (if you don't have one)
+
+1. Open [Google Cloud Console -- Credentials](https://console.cloud.google.com/apis/credentials)
+2. Create a new project (or pick an existing one)
+3. Click **Create Credentials > OAuth client ID**
+4. Choose **Web application** as the application type
+5. Give it a name like "Curio"
+
+### 2. Add your Curio URL as an authorized redirect
+
+In the same OAuth client, under **Authorized JavaScript origins** add:
+
+- `http://<your-ha-ip>:8099` -- for example `http://192.168.0.2:8099`
+- `http://homeassistant.local:8099` -- if you use the mDNS hostname
+- `https://<your-domain>` -- if you access HA over HTTPS (Nabu Casa, reverse proxy, etc.)
+
+Under **Authorized redirect URIs** add the same URLs but with `/oauth-callback.html` on the end:
+
+- `http://<your-ha-ip>:8099/oauth-callback.html`
+- `http://homeassistant.local:8099/oauth-callback.html`
+- `https://<your-domain>/oauth-callback.html` (if applicable)
+
+Add every URL you actually open Curio from. Google does an exact string match, so `http://` vs `https://`, the port number, and the IP all have to match.
+
+### 3. Enable the APIs you want to use
+
+From [API Library](https://console.cloud.google.com/apis/library), enable each service you plan to connect:
+
+- **Google Calendar API**
+- **Google Tasks API**
+- **Gmail API**
+- **Google Photos Library API**
+
+### 4. Paste the Client ID into Curio
+
+1. Copy the **Client ID** from Google Cloud Console (looks like `123456-abcd.apps.googleusercontent.com`)
+2. Open Curio > **Settings > Integrations > Google Services**
+3. Paste the Client ID into the **OAuth Client ID** field
+4. Click **Connect** next to any Google service
+
+The first time you connect, Google may warn that the app is unverified -- that's normal for personal OAuth clients. Click **Advanced > Go to Curio (unsafe)** to proceed.
+
+### If sign-in still fails
+
+- Double-check that the URL in the error message matches exactly what's in **Authorized redirect URIs**
+- Google OAuth changes can take a minute or two to propagate -- wait and try again
+- If your HA IP changes (DHCP), you'll need to re-add the new URL to Google Cloud Console. A static IP or mDNS hostname avoids this.
+
 ## Microphone and Camera
 
 Mic and camera require a "secure context" (HTTPS or localhost). This means:
