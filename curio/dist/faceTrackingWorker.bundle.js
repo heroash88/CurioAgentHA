@@ -4005,7 +4005,8 @@
 
   // src/services/faceTracking.worker.ts
   var MEDIAPIPE_FACE_MODEL_PATH = "/models/blaze_face_short_range.tflite";
-  var CDN_ROOT = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.1`;
+  var MEDIAPIPE_TASKS_VISION_WASM_ROOT = "/mediapipe/wasm";
+  var FACE_KEYPOINT_LIMIT = 6;
   var detector = null;
   var normalizeCoordinate = (value, dimension) => {
     if (typeof value !== "number" || !Number.isFinite(value)) return null;
@@ -4028,19 +4029,85 @@
     }
     return null;
   };
-  var extractFaceCenter = (detection, width, height) => {
-    if (!detection) return null;
-    const keypoints = detection.keypoints || detection.landmarks || detection.locationData?.relativeKeypoints;
-    if (Array.isArray(keypoints) && keypoints.length >= 2) {
-      const p1 = extractNormalizedPoint(keypoints[0], width, height);
-      const p2 = extractNormalizedPoint(keypoints[1], width, height);
-      if (p1 && p2) return { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+  var extractNormalizedBounds = (box, frameWidth, frameHeight) => {
+    if (!box) return null;
+    const width = normalizeCoordinate(box.width, frameWidth);
+    const height = normalizeCoordinate(box.height, frameHeight);
+    if (width === null || height === null || width <= 0 || height <= 0) return null;
+    if (typeof box.xCenter === "number" && typeof box.yCenter === "number") {
+      const xCenter = normalizeCoordinate(box.xCenter, frameWidth);
+      const yCenter = normalizeCoordinate(box.yCenter, frameHeight);
+      if (xCenter === null || yCenter === null) return null;
+      return {
+        xMin: Math.max(0, Math.min(1 - width, xCenter - width / 2)),
+        yMin: Math.max(0, Math.min(1 - height, yCenter - height / 2)),
+        width,
+        height,
+        xCenter,
+        yCenter
+      };
     }
-    return extractNormalizedCenter(detection.relativeBoundingBox || detection.locationData?.relativeBoundingBox, width, height);
+    if (typeof box.xMin === "number" && typeof box.yMin === "number") {
+      const xMin = normalizeCoordinate(box.xMin, frameWidth);
+      const yMin = normalizeCoordinate(box.yMin, frameHeight);
+      if (xMin === null || yMin === null) return null;
+      return {
+        xMin: Math.max(0, Math.min(1 - width, xMin)),
+        yMin: Math.max(0, Math.min(1 - height, yMin)),
+        width,
+        height,
+        xCenter: Math.max(0, Math.min(1, xMin + width / 2)),
+        yCenter: Math.max(0, Math.min(1, yMin + height / 2))
+      };
+    }
+    return null;
+  };
+  var deriveBoundsFromKeypoints = (keypoints) => {
+    if (!keypoints.length) return null;
+    let minX = keypoints[0].x;
+    let minY = keypoints[0].y;
+    let maxX = keypoints[0].x;
+    let maxY = keypoints[0].y;
+    for (const point of keypoints) {
+      minX = Math.min(minX, point.x);
+      minY = Math.min(minY, point.y);
+      maxX = Math.max(maxX, point.x);
+      maxY = Math.max(maxY, point.y);
+    }
+    const width = Math.max(0.12, maxX - minX);
+    const height = Math.max(0.12, maxY - minY);
+    const xCenter = Math.max(0, Math.min(1, (minX + maxX) / 2));
+    const yCenter = Math.max(0, Math.min(1, (minY + maxY) / 2));
+    return {
+      xMin: Math.max(0, Math.min(1 - width, xCenter - width / 2)),
+      yMin: Math.max(0, Math.min(1 - height, yCenter - height / 2)),
+      width,
+      height,
+      xCenter,
+      yCenter
+    };
+  };
+  var extractFaceSample = (detection, width, height) => {
+    if (!detection) return null;
+    const keypointCollections = [
+      detection.keypoints,
+      detection.landmarks,
+      detection.locationData?.relativeKeypoints,
+      detection.locationData?.keypoints
+    ];
+    const keypoints = keypointCollections.flatMap((collection) => Array.isArray(collection) ? collection : []).map((candidate) => extractNormalizedPoint(candidate, width, height)).filter((point) => Boolean(point)).slice(0, FACE_KEYPOINT_LIMIT);
+    const bounds = extractNormalizedBounds(detection.relativeBoundingBox, width, height) || extractNormalizedBounds(detection.boundingBox, width, height) || extractNormalizedBounds(detection.locationData?.relativeBoundingBox, width, height) || extractNormalizedBounds(detection.locationData?.boundingBox, width, height) || deriveBoundsFromKeypoints(keypoints);
+    const center = keypoints.length >= 2 ? { x: (keypoints[0].x + keypoints[1].x) / 2, y: (keypoints[0].y + keypoints[1].y) / 2 } : keypoints[0] || extractNormalizedCenter(detection.relativeBoundingBox || detection.locationData?.relativeBoundingBox, width, height) || (bounds ? { x: bounds.xCenter, y: bounds.yCenter } : null);
+    if (!center || !bounds) return null;
+    return {
+      center,
+      bounds,
+      keypoints
+    };
   };
   var init = async () => {
     try {
-      const vision = await Zo.forVisionTasks(`${CDN_ROOT}/wasm`);
+      const vision = await Zo.forVisionTasks(MEDIAPIPE_TASKS_VISION_WASM_ROOT);
       detector = await pc.createFromOptions(vision, {
         baseOptions: {
           modelAssetPath: MEDIAPIPE_FACE_MODEL_PATH,
@@ -4053,7 +4120,7 @@
       self.postMessage({ type: "INIT_DONE" });
     } catch (error) {
       try {
-        const vision = await Zo.forVisionTasks(`${CDN_ROOT}/wasm`);
+        const vision = await Zo.forVisionTasks(MEDIAPIPE_TASKS_VISION_WASM_ROOT);
         detector = await pc.createFromOptions(vision, {
           baseOptions: {
             modelAssetPath: MEDIAPIPE_FACE_MODEL_PATH,
@@ -4079,11 +4146,11 @@
       const { bitmap, timestamp } = payload;
       try {
         const result = detector.detectForVideo(bitmap, timestamp);
-        const center = result?.detections?.length ? extractFaceCenter(result.detections[0], bitmap.width, bitmap.height) : null;
+        const sample = result?.detections?.length ? extractFaceSample(result.detections[0], bitmap.width, bitmap.height) : null;
         bitmap.close();
         self.postMessage({
           type: "RESULT",
-          payload: { center, timestamp }
+          payload: { sample, timestamp }
         });
       } catch (error) {
         self.postMessage({ type: "ERROR", error: String(error) });

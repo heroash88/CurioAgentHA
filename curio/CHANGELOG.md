@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.0
+
+- Dashboard: new widgets (HA camera, HA light, HA sensor, robot face)
+- Cards: Gmail, Outlook Mail, Slack, Flight, Chore, Energy, Security, Sports, and more
+- Face identity and speaker recognition with profile management
+- New Kiro face personality variant
+- Routines, notifications, and proactive engine
+- HA entity filters, background ticker, wake lock
+- Many UI/service improvements and performance tuning
+
 ## 1.1.0
 
 - Auto-login: When running as an HA addon, Curio automatically connects to Home Assistant using the Supervisor token -- no manual token entry or OAuth needed
