@@ -1,1 +1,0 @@
-import{R as o,ap as l,j as a}from"./index-Cpch8cQ8.js";const n=({card:e})=>{const t=l(),s=e.data;return a.jsxs("div",{className:"card-glass",children:[a.jsx("p",{className:`text-base font-mono ${t.muted}`,children:s.equation}),a.jsxs("p",{className:`text-4xl font-bold font-headline mt-2 ${t.text}`,children:["= ",s.result]})]})},c=o.memo(n);export{c as default};
