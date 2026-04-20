@@ -1,22 +1,23 @@
 // Comprehensive Service Worker for Curio PWA
-const CACHE_NAME = 'curio-v2';
+//
+// Cache strategies:
+// - Network-First for index.html and '/' so the app entry is always fresh
+//   (stale index.html references old hashed asset names and breaks the app).
+// - Stale-While-Revalidate for hashed JS/CSS (safe: filenames change per build).
+// - Cache-First for images, fonts, audio, and models (heavy, rarely change).
+const CACHE_NAME = 'curio-v3';
 const MODEL_CACHE_NAME = 'curio-models-v1';
 const PRECACHE_ASSETS = [
-    '/',
-    '/index.html',
     '/manifest.json',
     '/curio_icon.png',
-    '/curio_mascot.png'
 ];
 
-// Install event - precache core assets
+// Install event - precache a minimal set (avoid precaching '/' so we always
+// fetch a fresh index.html on first load after an update).
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then((cache) => {
-                console.log('Opened cache and precaching core assets');
-                return cache.addAll(PRECACHE_ASSETS);
-            })
+            .then((cache) => cache.addAll(PRECACHE_ASSETS))
             .then(() => self.skipWaiting())
     );
 });
@@ -37,26 +38,42 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch event - Cache-First for assets, Stale-While-Revalidate for JS/CSS
+// Allow the page to trigger an immediate activation after an update.
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+});
+
+// Fetch event - strategy per resource type
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
     // Skip non-GET requests
     if (event.request.method !== 'GET') return;
 
-    // Skip caching for external image generators to ensure they load reliably
+    // Skip external image generators so they load reliably
     if (url.hostname.includes('pollinations.ai') || url.hostname.includes('loremflickr.com')) {
         return;
     }
 
-    // Determine strategy based on file type
     const isModel = url.pathname.match(/\.(onnx|wasm|tflite|mjs)$/);
-    const isStaticAsset = url.pathname.match(/\.(png|jpg|jpeg|gif|svg|mp3|wav|ogg|json|ico)$/);
+    const isStaticAsset = url.pathname.match(/\.(png|jpg|jpeg|gif|svg|mp3|wav|ogg|json|ico|ttf|woff2?)$/);
     const isCode = url.pathname.match(/\.(js|css)$/);
+    const isAppEntry = url.pathname === '/' || url.pathname.endsWith('/index.html');
 
-    if (isModel) {
+    if (isAppEntry) {
+        // Network-First for app entry. A stale index.html points at old
+        // hashed asset names that no longer exist after a redeploy.
+        event.respondWith(
+            fetch(event.request).then((networkResponse) => {
+                const copy = networkResponse.clone();
+                caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+                return networkResponse;
+            }).catch(() => caches.match(event.request))
+        );
+    } else if (isModel) {
         // Cache First for ONNX models, WASM, and TFLite (5-20MB each, rarely change).
-        // Uses a dedicated cache so model updates can be versioned independently.
         event.respondWith(
             caches.open(MODEL_CACHE_NAME).then((cache) => {
                 return cache.match(event.request).then((cachedResponse) => {
@@ -69,7 +86,7 @@ self.addEventListener('fetch', (event) => {
             })
         );
     } else if (isStaticAsset) {
-        // Cache First for media and models (heavy assets)
+        // Cache First for media and icons.
         event.respondWith(
             caches.match(event.request).then((cachedResponse) => {
                 if (cachedResponse) return cachedResponse;
@@ -81,8 +98,8 @@ self.addEventListener('fetch', (event) => {
                 });
             })
         );
-    } else if (isCode || url.pathname === '/') {
-        // Stale-While-Revalidate for code and index
+    } else if (isCode) {
+        // Stale-While-Revalidate for hashed JS/CSS.
         event.respondWith(
             caches.match(event.request).then((cachedResponse) => {
                 const fetchPromise = fetch(event.request).then((networkResponse) => {
