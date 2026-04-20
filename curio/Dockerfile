@@ -7,8 +7,7 @@ FROM ${BUILD_FROM}
 
 # nginx -- serves the static app
 # nodejs + npm -- runs the bundled Nova Sonic WebSocket proxy
-# tini -- so we can run nginx and node together under a single PID 1
-RUN apk add --no-cache nginx nodejs npm tini
+RUN apk add --no-cache nginx nodejs npm
 
 # Web app
 COPY dist/ /var/www/html/
@@ -30,7 +29,8 @@ RUN chmod a+x /run.sh
 
 EXPOSE 8099
 
-# tini reaps zombies and forwards signals. run.sh starts the Nova proxy
-# in the background and nginx in the foreground.
-ENTRYPOINT ["/sbin/tini", "--"]
+# HA base images use s6-overlay as init. CMD must invoke run.sh via s6;
+# run.sh's `#!/usr/bin/with-contenv bashio` shebang integrates with s6.
+# Do NOT set ENTRYPOINT here -- it would override s6's /init and break
+# with-contenv (container_environment is populated by s6).
 CMD ["/run.sh"]

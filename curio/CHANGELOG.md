@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.1
+
+- Fix: addon crash loop on startup ("s6-envdir: unable to envdir /run/s6/container_environment"). The 1.3.0 Dockerfile set an `ENTRYPOINT` that bypassed s6-overlay. Reverted to letting s6 run as PID 1 so `with-contenv bashio` works again.
+
 ## 1.3.0
 
 - Bundled Nova Sonic WebSocket proxy -- Nova now works out of the box. No more running a separate `npm run nova:proxy` process. The addon image includes Node and runs the proxy on 127.0.0.1:8081; nginx exposes it at `/nova-proxy`.
