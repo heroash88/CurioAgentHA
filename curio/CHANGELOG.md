@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.0
+
+- Bundled Nova Sonic WebSocket proxy -- Nova now works out of the box. No more running a separate `npm run nova:proxy` process. The addon image includes Node and runs the proxy on 127.0.0.1:8081; nginx exposes it at `/nova-proxy`.
+- Frontend auto-detects the bundled proxy when running in the addon (or RPi kiosk / Electron), so users only need their Nova API key.
+
 ## 1.2.1
 
 - Fix: Google, Microsoft, and Slack OAuth sign-in failing with "crypto.randomUUID is not a function" when the addon is accessed over plain HTTP (non-secure context)

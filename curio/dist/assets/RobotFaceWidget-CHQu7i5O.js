@@ -1,1 +1,0 @@
-import{j as t}from"./index-BvPTxPWa.js";const s=({faceSlot:e})=>t.jsx("div",{className:"relative w-full h-full rounded-[2rem] flex items-center justify-center",children:e});export{s as RobotFaceWidget};

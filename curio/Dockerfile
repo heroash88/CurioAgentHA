@@ -5,16 +5,32 @@
 ARG BUILD_FROM
 FROM ${BUILD_FROM}
 
-RUN apk add --no-cache nginx
+# nginx -- serves the static app
+# nodejs + npm -- runs the bundled Nova Sonic WebSocket proxy
+# tini -- so we can run nginx and node together under a single PID 1
+RUN apk add --no-cache nginx nodejs npm tini
 
+# Web app
 COPY dist/ /var/www/html/
 COPY nginx.conf /etc/nginx/http.d/default.conf
+
+# Nova Sonic proxy. npm ci would need package-lock.json; install is fine
+# for a single pinned dep (ws) and keeps the image self-contained without
+# shipping node_modules through git.
+WORKDIR /opt/nova-proxy
+COPY nova-proxy-package.json ./package.json
+COPY nova-proxy.mjs ./nova-proxy.mjs
+RUN npm install --omit=dev --no-audit --no-fund --loglevel=error \
+    && npm cache clean --force
+
+WORKDIR /
+
 COPY run.sh /
 RUN chmod a+x /run.sh
 
 EXPOSE 8099
 
-# HA base images use s6-overlay as init. CMD must be /init so s6
-# starts as PID 1. run.sh is invoked by s6 via the shebang
-# #!/usr/bin/with-contenv bashio which integrates with s6.
+# tini reaps zombies and forwards signals. run.sh starts the Nova proxy
+# in the background and nginx in the foreground.
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["/run.sh"]
