@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.3.6 -- 2026-04-20
+
+- Automated release bump.
+
+## v1.3.5 -- 2026-04-20
+
+- Automated release bump.
+
+## v1.3.4 -- 2026-04-20
+
+- Automated release bump.
+
+## v1.3.3 -- 2026-04-20
+
+- Automated release bump.
+
+## v1.3.2 -- 2026-04-20
+
+- Automated release bump.
+
 ## 1.3.1
 
 - Fix: addon crash loop on startup ("s6-envdir: unable to envdir /run/s6/container_environment"). The 1.3.0 Dockerfile set an `ENTRYPOINT` that bypassed s6-overlay. Reverted to letting s6 run as PID 1 so `with-contenv bashio` works again.
