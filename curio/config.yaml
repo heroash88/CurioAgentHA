@@ -1,6 +1,6 @@
 name: "Curio Robot"
 description: "Curio -- a voice-powered AI assistant with 30+ response cards, wake word detection, smart home control, and more."
-version: "1.2.0"
+version: "1.2.1"
 slug: "curio_ha_addon"
 url: "https://github.com/heroash88/CurioAgentHA"
 arch:

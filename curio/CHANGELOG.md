@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1
+
+- Fix: Google, Microsoft, and Slack OAuth sign-in failing with "crypto.randomUUID is not a function" when the addon is accessed over plain HTTP (non-secure context)
+- Fix: stale bundle after updates -- switched service worker to network-first for index.html and added auto skipWaiting, so browsers pick up new builds automatically
+- Docs: added Google Sign-In setup walkthrough (OAuth client creation + redirect URI allowlist) to the addon README
+
 ## 1.2.0
 
 - Dashboard: new widgets (HA camera, HA light, HA sensor, robot face)
