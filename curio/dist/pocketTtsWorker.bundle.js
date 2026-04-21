@@ -14354,7 +14354,7 @@ ${u}`, c = n.createShaderModule({ code: d, label: e.name });
   }
 
   // src/lib/pocketTts/mimiEncoder.ts
-  ye.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.24.3/dist/";
+  ye.wasm.wasmPaths = "/models/";
   var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
   ye.wasm.numThreads = isIOS ? 1 : Math.min(navigator.hardwareConcurrency || 4, 4);
   ye.wasm.simd = true;
