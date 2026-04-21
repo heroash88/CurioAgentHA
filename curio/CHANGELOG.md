@@ -1,5 +1,30 @@
 # Changelog
 
+## v1.3.33 -- 2026-04-21
+
+- Automated release bump.
+
+# Changelog
+
+## v1.3.33 -- 2026-04-21
+
+- Added Kitten TTS engine -- three model sizes (Nano 15M, Micro 40M, Mini 80M) bundled locally for fully offline text-to-speech
+- Kitten TTS runs on the main thread with a single ONNX call per chunk -- works on iOS Safari and PWA without hangs
+- 8 built-in Kitten voices (Bella, Jasper, Luna, Bruno, Rosie, Hugo, Kiki, Leo)
+- Model picker in Settings (Nano for phones, Micro for laptops, Mini for desktops)
+- Voice cloning UI now only shows when Pocket TTS is selected
+- 60-second inactivity timer keeps loaded model hot across conversation turns
+- Fixed .gitignore so kitten-tts model files are tracked in git (no LFS)
+- Updated offline voice models documentation to cover both Kitten and Pocket TTS
+
+## v1.3.32 -- 2026-04-21
+
+- Automated release bump.
+
+## v1.3.31 -- 2026-04-21
+
+- Automated release bump.
+
 ## v1.3.30 -- 2026-04-21
 
 - Automated release bump.
