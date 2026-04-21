@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.3.22 -- 2026-04-21
+
+- Automated release bump.
+
+## v1.3.21 -- 2026-04-21
+
+- Automated release bump.
+
+## v1.3.20 -- 2026-04-21
+
+- Automated release bump.
+
+## v1.3.19 -- 2026-04-21
+
+- Automated release bump.
+
+## v1.3.18 -- 2026-04-21
+
+- Automated release bump.
+
 ## v1.3.17 -- 2026-04-21
 
 - Automated release bump.
