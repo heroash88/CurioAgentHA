@@ -1,0 +1,1 @@
+const t="curio:tts-progress",o=e=>{typeof window>"u"||window.dispatchEvent(new CustomEvent(t,{detail:e}))},s=e=>{if(typeof window>"u")return()=>{};const n=r=>{e(r.detail)};return window.addEventListener(t,n),()=>{window.removeEventListener(t,n)}};export{o as reportTtsProgress,s as subscribeTtsProgress};

@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.34 -- 2026-05-03
+
+- Updated bundled Curio web app with the latest dashboard widget polish and Electron-adjacent UI fixes from Curio Robot v0.1.1.
+
 ## v1.3.33 -- 2026-04-21
 
 - Automated release bump.

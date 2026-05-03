@@ -5,8 +5,8 @@
 //   (stale index.html references old hashed asset names and breaks the app).
 // - Stale-While-Revalidate for hashed JS/CSS (safe: filenames change per build).
 // - Cache-First for images, fonts, audio, and models (heavy, rarely change).
-const CACHE_NAME = 'curio-v3';
-const MODEL_CACHE_NAME = 'curio-models-v1';
+const CACHE_NAME = 'curio-v4';
+const MODEL_CACHE_NAME = 'curio-models-v2';
 const PRECACHE_ASSETS = [
     '/manifest.json',
     '/curio_icon.png',
@@ -61,10 +61,24 @@ self.addEventListener('fetch', (event) => {
     const isStaticAsset = url.pathname.match(/\.(png|jpg|jpeg|gif|svg|mp3|wav|ogg|json|ico|ttf|woff2?)$/);
     const isCode = url.pathname.match(/\.(js|css)$/);
     const isAppEntry = url.pathname === '/' || url.pathname.endsWith('/index.html');
+    const isRuntimeWorker =
+        url.pathname.endsWith('/pocketTtsWorker.bundle.js') ||
+        url.pathname.endsWith('/faceTrackingWorker.bundle.js');
 
     if (isAppEntry) {
         // Network-First for app entry. A stale index.html points at old
         // hashed asset names that no longer exist after a redeploy.
+        event.respondWith(
+            fetch(event.request).then((networkResponse) => {
+                const copy = networkResponse.clone();
+                caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+                return networkResponse;
+            }).catch(() => caches.match(event.request))
+        );
+    } else if (isRuntimeWorker) {
+        // Network-First for fixed-name worker bundles. They are not hashed by
+        // Vite, so cache-first/stale-first can leave old inference code paired
+        // with newer app code after a deploy.
         event.respondWith(
             fetch(event.request).then((networkResponse) => {
                 const copy = networkResponse.clone();

@@ -33,6 +33,48 @@
 
     var origin = window.location.origin;
 
+    var decodeBase64Url = function (value) {
+        var base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+        while (base64.length % 4) base64 += '=';
+        return atob(base64);
+    };
+
+    var getSpotifyReturnOrigin = function (stateValue) {
+        var marker = stateValue ? stateValue.lastIndexOf('.') : -1;
+        if (marker < 0) return null;
+
+        try {
+            var metadata = JSON.parse(decodeBase64Url(stateValue.slice(marker + 1)));
+            return typeof metadata.returnOrigin === 'string' ? metadata.returnOrigin : null;
+        } catch (e) {
+            return null;
+        }
+    };
+
+    var isLoopbackOrigin = function (value) {
+        try {
+            var url = new URL(value);
+            var host = url.hostname;
+            return (
+                url.protocol === 'http:' &&
+                (host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host === '::1')
+            );
+        } catch (e) {
+            return false;
+        }
+    };
+
+    var canForwardLoopbackCallback = function (fromOrigin, toOrigin) {
+        if (!toOrigin || fromOrigin === toOrigin) return false;
+        if (!isLoopbackOrigin(fromOrigin) || !isLoopbackOrigin(toOrigin)) return false;
+
+        var fromUrl = new URL(fromOrigin);
+        var toUrl = new URL(toOrigin);
+        return fromUrl.protocol === toUrl.protocol && fromUrl.port === toUrl.port;
+    };
+
+    var spotifyReturnOrigin = code && state ? getSpotifyReturnOrigin(state) : null;
+
     // Channel 1: localStorage (survives app suspension on iOS)
     try {
         localStorage.setItem('curio_oauth_result', JSON.stringify(payload));
@@ -52,12 +94,50 @@
         try {
             window.opener.postMessage(payload, origin);
         } catch (e) { /* ignore */ }
+        if (spotifyReturnOrigin && spotifyReturnOrigin !== origin) {
+            try {
+                window.opener.postMessage(payload, spotifyReturnOrigin);
+            } catch (e) { /* ignore */ }
+        }
+        // Spotify requires loopback IP literals and rejects localhost redirect
+        // URIs, so dev redirects may return from 127.0.0.1 while the app was
+        // opened on localhost. The receiver still validates OAuth state.
+        try {
+            window.opener.postMessage(payload, '*');
+        } catch (e) { /* ignore */ }
     }
 
-    // Try to close, then show fallback message
+    var returnToApp = function () {
+        var appUrl = new URL('/', origin);
+        appUrl.searchParams.set('oauth', 'callback');
+        window.location.replace(appUrl.toString());
+    };
+
+    var forwardToOriginalLoopbackOrigin = function () {
+        if (!code || !state || params.get('spotifyForwarded') === '1') return false;
+        if (!canForwardLoopbackCallback(origin, spotifyReturnOrigin)) return false;
+
+        var callbackUrl = new URL('/oauth-callback.html', spotifyReturnOrigin);
+        callbackUrl.searchParams.set('code', code);
+        callbackUrl.searchParams.set('state', state);
+        callbackUrl.searchParams.set('spotifyForwarded', '1');
+        window.location.replace(callbackUrl.toString());
+        return true;
+    };
+
+    // Try to close. If this page is running as a regular tab or an isolated
+    // popup that cannot close itself, return to the app so it can resume the
+    // stored callback from localStorage.
     setTimeout(function () {
         window.close();
         setTimeout(function () {
+            if (forwardToOriginalLoopbackOrigin()) {
+                return;
+            }
+            if (code) {
+                returnToApp();
+                return;
+            }
             document.body.innerHTML =
                 '<p style="font-family:system-ui;text-align:center;margin-top:40px;">' +
                 'Sign-in complete! You can close this tab and return to Curio.' +
