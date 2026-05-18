@@ -1,0 +1,1 @@
+import{n as e}from"./HostApp-Dgd8w91R.js";const t={[e.HOME]:{name:"Home",modeStr:"global",context:"The user is on the Home screen."},[e.CURIO_MODE]:{name:"Curio Agent",modeStr:"global",context:"The user is talking directly to you, Curio, their friendly AI companion."}};export{t as S};

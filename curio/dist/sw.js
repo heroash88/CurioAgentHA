@@ -18,7 +18,6 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => cache.addAll(PRECACHE_ASSETS))
-            .then(() => self.skipWaiting())
     );
 });
 
@@ -39,6 +38,8 @@ self.addEventListener('activate', (event) => {
 });
 
 // Allow the page to trigger an immediate activation after an update.
+// Do not call skipWaiting() from install: the page coordinates activation so
+// a new worker cannot take control and reload while Gemini Live is active.
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
@@ -57,12 +58,22 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    const isModel = url.pathname.match(/\.(onnx|wasm|tflite|mjs)$/);
+    const isRangeRequest = event.request.headers.has('range');
+    if (isRangeRequest) {
+        // Partial 206 responses cannot be safely stored in Cache API. Piper
+        // uses one-byte probes on hosts where HEAD is unreliable, so bypass the
+        // model cache for those checks.
+        event.respondWith(fetch(event.request));
+        return;
+    }
+
+    const isModel = url.pathname.match(/\.(onnx|wasm|tflite|mjs|safetensors|bin|model|npz)$/);
     const isStaticAsset = url.pathname.match(/\.(png|jpg|jpeg|gif|svg|mp3|wav|ogg|json|ico|ttf|woff2?)$/);
     const isCode = url.pathname.match(/\.(js|css)$/);
     const isAppEntry = url.pathname === '/' || url.pathname.endsWith('/index.html');
     const isRuntimeWorker =
         url.pathname.endsWith('/pocketTtsWorker.bundle.js') ||
+        url.pathname.endsWith('/supertonicTtsWorker.bundle.js') ||
         url.pathname.endsWith('/faceTrackingWorker.bundle.js');
 
     if (isAppEntry) {
@@ -87,7 +98,7 @@ self.addEventListener('fetch', (event) => {
             }).catch(() => caches.match(event.request))
         );
     } else if (isModel) {
-        // Cache First for ONNX models, WASM, and TFLite (5-20MB each, rarely change).
+        // Cache First for ONNX, WASM, TFLite, and Hugging Face model assets.
         event.respondWith(
             caches.open(MODEL_CACHE_NAME).then((cache) => {
                 return cache.match(event.request).then((cachedResponse) => {

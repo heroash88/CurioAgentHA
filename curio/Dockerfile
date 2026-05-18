@@ -2,8 +2,15 @@
 # HA builds from this folder (curio/) as the Docker context.
 # The deploy script copies dist/ into this folder before pushing.
 
-ARG BUILD_FROM
+ARG BUILD_FROM=ghcr.io/home-assistant/base:3.21
+ARG BUILD_VERSION=1.3.35
 FROM ${BUILD_FROM}
+
+ARG BUILD_VERSION=1.3.35
+LABEL org.opencontainers.image.title="Curio Robot" \
+    org.opencontainers.image.description="Curio - Voice-powered AI assistant with 30+ response cards" \
+    io.hass.type="addon" \
+    io.hass.version="${BUILD_VERSION}"
 
 # nginx -- serves the static app
 # nodejs + npm -- runs the bundled Nova Sonic WebSocket proxy

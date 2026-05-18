@@ -1,0 +1,1 @@
+import{r as t}from"./react-CPkiFScu.js";import{u as r}from"./useMotionProfile-CwWh1W2E.js";const n=o=>({...o,shouldReduceMotion:o.mode==="off",canUseTransform:o.mode==="full",durationSeconds:e=>o.durationMs(e)/1e3});function a(){const o=r();return t.useMemo(()=>n(o),[o])}export{a as u};

@@ -6501,13 +6501,13 @@
   var DEFAULT_ORT_WASM_PATH_PREFIX = "/models/";
   var DEFAULT_ORT_WASM_BINARY = "ort-wasm-simd-threaded.wasm";
   var normalizeOrtWasmPathPrefix = (prefix = DEFAULT_ORT_WASM_PATH_PREFIX) => prefix.endsWith("/") ? prefix : `${prefix}/`;
-  var createOrtWasmPaths = (prefix = DEFAULT_ORT_WASM_PATH_PREFIX) => ({
-    wasm: `${normalizeOrtWasmPathPrefix(prefix)}${DEFAULT_ORT_WASM_BINARY}`
+  var createOrtWasmPaths = (prefix = DEFAULT_ORT_WASM_PATH_PREFIX, binary = DEFAULT_ORT_WASM_BINARY) => ({
+    wasm: `${normalizeOrtWasmPathPrefix(prefix)}${binary}`
   });
   var configureOrtWasmEnv = (env, options = {}) => {
     const wasm = env.wasm;
     if (options.forceWasmPaths || !wasm.wasmPaths) {
-      wasm.wasmPaths = createOrtWasmPaths(options.wasmPathPrefix);
+      wasm.wasmPaths = createOrtWasmPaths(options.wasmPathPrefix, options.wasmBinary);
     }
     wasm.simd = true;
     if (typeof options.numThreads === "number" && Number.isFinite(options.numThreads)) {
@@ -6567,7 +6567,11 @@
 
   // src/services/audioContext.ts
   var AudioContextClass = typeof window !== "undefined" ? window.AudioContext || window.webkitAudioContext : void 0;
-  var isSafariBrowser = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent) && !/Chromium/.test(navigator.userAgent) && !/Edg/.test(navigator.userAgent);
+  var getNavigatorUserAgent = () => typeof navigator === "undefined" ? "" : navigator.userAgent;
+  var isIOSLikeUserAgent = (userAgent = "") => /iPad|iPhone|iPod/.test(userAgent) || /Macintosh/.test(userAgent) && /Mobile\/\S+ Safari\//.test(userAgent);
+  var isSafariLikeUserAgent = (userAgent = "") => /Safari\//.test(userAgent) && !/Chrome|Chromium|Edg|OPR|CriOS|FxiOS/.test(userAgent);
+  var isSafariBrowser = isSafariLikeUserAgent(getNavigatorUserAgent());
+  var isIOSLikeBrowser = isIOSLikeUserAgent(getNavigatorUserAgent());
 
   // src/lib/pocketTts/audioPostProcess.ts
   var POCKET_SAMPLE_RATE = 24e3;
@@ -6603,10 +6607,8 @@
   };
 
   // src/lib/pocketTts/onnxEngine.ts
-  var ONNX_BASE_URL = "https://huggingface.co/KevinAHM/pocket-tts-onnx/resolve/main/onnx";
   var ONNX_BUNDLE_REMOTE_URL = "https://huggingface.co/spaces/KevinAHM/pocket-tts-web/resolve/main/onnx/english_2026-04";
-  var LOCAL_BASE_URL = "/models/pocket-tts-onnx";
-  var LOCAL_BUNDLE_URL = `${LOCAL_BASE_URL}/english_2026-04`;
+  var LOCAL_BUNDLE_URL = "/models/pocket-tts-onnx/english_2026-04";
   var SAMPLE_RATE = POCKET_SAMPLE_RATE;
   var SAMPLES_PER_FRAME = POCKET_SAMPLES_PER_FRAME;
   var FRAME_LATENT_DIM = 32;
@@ -6627,7 +6629,7 @@
   var wrapSafariMemoryError = (err, phase) => {
     const message = err instanceof Error ? err.message : String(err);
     return new Error(
-      `Pocket TTS couldn't ${phase} in Safari. Safari caps WebAssembly memory aggressively, which may not be enough for the Pocket TTS models plus runtime buffers. Close other browser tabs and try again, or switch to the 'Browser', 'Tiny', or 'Remote' TTS engine in Settings. (Underlying error: ${message})`
+      `Pocket TTS couldn't ${phase} in Safari. Safari caps WebAssembly memory aggressively, which may not be enough for the Pocket TTS models plus runtime buffers. Close other browser tabs and try again, or switch to the 'Browser', 'Piper', or 'Remote' TTS engine in Settings. (Underlying error: ${message})`
     );
   };
   var makeSessionOptions = () => {
@@ -6643,20 +6645,11 @@
       graphOptimizationLevel: "all"
     };
   };
-  var legacyModelName = (name) => {
-    if (name === "text_conditioner_int8") {
-      return "text_conditioner";
-    }
-    return name;
-  };
   var fetchModel = async (name) => {
     const filename = `${name}.onnx`;
-    const legacyFilename = `${legacyModelName(name)}.onnx`;
     const local = `${LOCAL_BUNDLE_URL}/${filename}`;
     const remote = `${ONNX_BUNDLE_REMOTE_URL}/${filename}`;
-    const legacyLocal = `${LOCAL_BASE_URL}/${legacyFilename}`;
-    const legacyRemote = `${ONNX_BASE_URL}/${legacyFilename}`;
-    for (const url of [local, remote, legacyLocal, legacyRemote]) {
+    for (const url of [local, remote]) {
       try {
         const head = await fetch(url, { method: "HEAD" });
         const contentType = head.headers.get("content-type") || "";
@@ -6963,7 +6956,19 @@
       return;
     }
     if (msg.type === "speak") {
-      const { id, tokenIds, voiceEmbedding, voiceEmbeddingFrames, voiceState, temperature, lsdSteps, framesAfterEos } = msg;
+      const {
+        id,
+        tokenIds,
+        voiceEmbedding,
+        voiceEmbeddingFrames,
+        voiceState,
+        temperature,
+        lsdSteps,
+        framesAfterEos,
+        firstChunkFrames,
+        chunkFrames,
+        yieldEverySteps
+      } = msg;
       try {
         const active = await ensureBundle();
         await runInference(
@@ -6975,7 +6980,10 @@
             voiceEmbeddingFrames,
             temperature,
             lsdSteps,
-            framesAfterEos
+            framesAfterEos,
+            firstChunkFrames,
+            chunkFrames,
+            yieldEverySteps
           },
           async (samples) => {
             const copy = new Float32Array(samples.length);

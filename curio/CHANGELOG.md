@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.3.35 -- 2026-05-18
+
+- Updated bundled Curio web app from Curio Robot commit `8c7e701`.
+- Added the generated UI dashboard, widget, export, and reply-surface updates.
+- Refreshed desktop visual context, selected text, clipboard, local runtime, and voice/TTS changes.
+- Removed obsolete bundled Tiny/Kitten/Pocket/Piper model payloads from the prebuilt add-on bundle.
+
 ## v1.3.34 -- 2026-05-03
 
 - Updated bundled Curio web app with the latest dashboard widget polish and Electron-adjacent UI fixes from Curio Robot v0.1.1.

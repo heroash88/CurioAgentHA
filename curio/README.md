@@ -1,6 +1,19 @@
-# Curio Robot
+# Curio Robot Home Assistant Add-on
 
-A voice-powered AI assistant that runs as a Home Assistant add-on. Uses Google's Gemini Live API for real-time voice conversation with 35+ visual response cards.
+Curio Robot can run as a Home Assistant add-on with ingress support, direct network access, smart home widgets, HA service routines, proactive notifications, and optional Home Assistant Assist voice pipeline integration.
+
+The add-on serves the same Curio app documented in the root [README](../README.md). It includes the dashboard, response cards, local/offline voice options, and Home Assistant device controls.
+
+## Add-on Image and Store Assets
+
+The add-on builds from the Home Assistant base image `ghcr.io/home-assistant/{arch}-base:3.21` through `build.yaml`. The Dockerfiles also default to the multi-arch `ghcr.io/home-assistant/base:3.21`, so local Docker or BuildKit builds do not depend on Supervisor injecting a `BUILD_FROM` argument.
+
+Home Assistant store graphics are included as PNG files in this folder:
+
+- `icon.png` is the 128x128 add-on icon.
+- `logo.png` is the 250x250 add-on logo.
+
+The release deploy script copies these assets into the published add-on repository with the rest of the add-on package.
 
 ## Installation
 
@@ -11,7 +24,7 @@ A voice-powered AI assistant that runs as a Home Assistant add-on. Uses Google's
 5. After install, toggle **Show in sidebar** for quick access
 6. Click **Start**, then **Open Web UI**
 
-The add-on uses ingress -- it appears directly inside the Home Assistant UI. When running as an add-on, Curio automatically connects to your Home Assistant instance (no manual token or login needed).
+The add-on uses ingress, so it appears directly inside the Home Assistant UI. Direct access is also available for OAuth, voice, camera, and kiosk flows.
 
 ## Direct Access (for Google Sign-In)
 
@@ -95,7 +108,8 @@ For the best experience on a kiosk/tablet, access Curio directly at `http(s)://<
 
 ## Requirements
 
-- A Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey) (entered in Curio's settings after first launch)
+- Home Assistant with add-on support.
+- At least one assistant backend configured in Curio settings, such as Gemini Live, Nova Sonic, Home Assistant Voice, or a custom Ollama/OpenAI-compatible text LLM.
 
 ## Configuration
 
@@ -104,6 +118,20 @@ For the best experience on a kiosk/tablet, access Curio directly at `http(s)://<
 | `port` | `8099` | Port for direct web access (change if 8099 conflicts) |
 | `log_level` | `info` | Logging verbosity |
 
+## What Works Well in the Add-on
+
+- Home Assistant lights, sensors, cameras, climate, covers, media players, select entities, button stacks, calendars, vacuums, printers, energy, and general home status widgets.
+- Routines that react to Home Assistant entity states.
+- Routines that call Home Assistant services.
+- Dashboard mode in the HA sidebar or a direct browser tab.
+- iCal, Google, Outlook, Slack, weather, and local voice features when configured from direct access.
+
+## Known Browser Constraints
+
+- Google sign-in and some popup flows should be done from direct access at `http://<your-ha-ip>:8099`, not inside HA ingress.
+- Microphone and camera usually need HTTPS or a browser exception for insecure local origins.
+- HA ingress runs inside an iframe, so direct access is better for voice, camera, and kiosk/tablet setups.
+
 ## Updating
 
-When a new version is available, go to **Settings > Add-ons > Curio Robot** and click **Rebuild**.
+When a new version is available, go to **Settings > Add-ons > Curio Robot** and click **Update**. If you are testing a local copy of the add-on folder, use **Rebuild** after changing the Dockerfile, base image, or bundled app files.

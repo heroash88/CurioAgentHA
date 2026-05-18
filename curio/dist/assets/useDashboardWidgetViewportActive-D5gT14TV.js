@@ -1,0 +1,1 @@
+import{r}from"./react-CPkiFScu.js";import{s as o,h as c}from"./react-resizable-panels-Jg_wyAvZ.js";const u=t=>{const s=r.useCallback(a=>o(t,a),[t]),e=r.useCallback(()=>c(t),[t]);return r.useSyncExternalStore(s,e,()=>!0)};export{u};
